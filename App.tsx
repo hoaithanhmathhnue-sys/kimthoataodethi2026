@@ -7,8 +7,6 @@ import MarkdownView from './components/MarkdownView';
 import LoginScreen from './components/LoginScreen';
 import { generateStep1Matrix, generateStep2Specs, generateStep3Exam, extractInfoFromDocument, convertMatrixFileToHtml, getApiKey, setApiKey as saveApiKey } from './services/geminiService';
 import { ArrowRight, RotateCcw, FileText, Download, AlertCircle, Upload, Clock, Check, ChevronDown, ChevronRight, Filter, FileUp, Settings, Key, ExternalLink, LogOut, School, MapPin } from 'lucide-react';
-import avatarImg from './GV/avatar.jpg';
-import logoImg from './GV/logo.jpg';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -767,7 +765,7 @@ const App: React.FC = () => {
         <div className="max-w-[1600px] mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md border border-white/50 shrink-0">
-              <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
+              <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-teal-900 leading-tight">TẠO ĐỀ THI THEO CV 7991</h1>
@@ -777,7 +775,7 @@ const App: React.FC = () => {
             {/* Author Info Badge */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-50/80 border border-teal-100">
               <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-teal-200 shrink-0">
-                <img src={avatarImg} alt="Avatar" className="w-full h-full object-cover" />
+                <img src="/avatar.jpg" alt="Avatar" className="w-full h-full object-cover" />
               </div>
               <div className="text-xs leading-tight">
                 <p className="font-semibold text-teal-800">Trần Thị Kim Thoa</p>
