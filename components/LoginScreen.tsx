@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { Eye, EyeOff, LogIn, User, Lock, MapPin, School, Sparkles } from 'lucide-react';
+import avatarImg from '../GV/avatar.jpg';
+import logoImg from '../GV/logo.jpg';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -46,7 +48,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         {/* Logo & Title */}
         <div className="text-center mb-8 animate-fade-in-up">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 overflow-hidden shadow-lg shadow-teal-200/50 border-2 border-white/80">
-            <img src="/GV/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+            <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
             TẠO ĐỀ THI THEO CV 7991
@@ -145,7 +147,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 {/* Avatar */}
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-teal-100 shadow-lg shadow-teal-100/50 mb-4">
                   <img
-                    src="/GV/avatar.jpg"
+                    src={avatarImg}
                     alt="Trần Thị Kim Thoa"
                     className="w-full h-full object-cover"
                   />
