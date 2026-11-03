@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Eye, EyeOff, LogIn, User, Lock, MapPin, School, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, LogIn, User, Lock, MapPin, School, Sparkles, Mail, Phone } from 'lucide-react';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -8,6 +8,9 @@ interface LoginScreenProps {
 
 const VALID_USER = 'Trần Thị Kim Thoa';
 const VALID_PASS = '12345';
+
+// So khớp tên không phân biệt hoa/thường và kiểu gõ dấu tiếng Việt (NFC/NFD)
+const normalizeName = (v: string) => v.trim().normalize('NFC').toLocaleLowerCase('vi');
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -25,7 +28,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     // Simulate a brief loading
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    if (username.trim() === VALID_USER && password === VALID_PASS) {
+    if (normalizeName(username) === normalizeName(VALID_USER) && password === VALID_PASS) {
       onLogin();
     } else {
       setError('Tên đăng nhập hoặc mật khẩu không đúng!');
@@ -46,7 +49,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         {/* Logo & Title */}
         <div className="text-center mb-8 animate-fade-in-up">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 overflow-hidden shadow-lg shadow-teal-200/50 border-2 border-white/80">
-            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+            <img src="/tac-gia/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
             TẠO ĐỀ THI THEO CV 7991
@@ -70,6 +73,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 placeholder="Nhập tên đăng nhập..."
                 className="w-full p-3.5 input-elevated focus:ring-2 focus:ring-primary outline-none text-sm"
                 autoFocus
+                autoComplete="off"
               />
             </div>
 
@@ -85,6 +89,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Nhập mật khẩu..."
+                  autoComplete="off"
                   className="w-full p-3.5 pr-12 input-elevated focus:ring-2 focus:ring-primary outline-none text-sm"
                 />
                 <button
@@ -145,7 +150,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 {/* Avatar */}
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-teal-100 shadow-lg shadow-teal-100/50 mb-4">
                   <img
-                    src="/avatar.jpg"
+                    src="/tac-gia/avatar.jpg"
                     alt="Trần Thị Kim Thoa"
                     className="w-full h-full object-cover"
                   />
@@ -161,6 +166,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   <p className="flex items-center justify-center gap-1.5">
                     <MapPin className="w-4 h-4 text-teal-500" />
                     Số 1 Mạc Đĩnh Chi, phường Phú Lợi, TP. Cần Thơ
+                  </p>
+                  <p className="flex items-center justify-center gap-1.5">
+                    <Mail className="w-4 h-4 text-teal-500" />
+                    <a href="mailto:ttkthoa.thpthoangdieu@cantho.edu.vn" className="hover:underline">ttkthoa.thpthoangdieu@cantho.edu.vn</a>
+                  </p>
+                  <p className="flex items-center justify-center gap-1.5">
+                    <Phone className="w-4 h-4 text-teal-500" />
+                    <a href="tel:0918939942" className="hover:underline">0918939942</a>
                   </p>
                 </div>
 

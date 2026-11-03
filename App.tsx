@@ -22,8 +22,7 @@ import { asBlob } from 'html-docx-js-typescript';
 import MarkdownIt from 'markdown-it';
 import { GEMINI_MODELS, AGENT_PLATFORM_MODELS, DEFAULT_GEMINI_MODEL, DEFAULT_AGENT_PLATFORM_MODEL, AiProvider } from './constants';
 import { MATRIX_TEMPLATES } from './services/matrixTemplates';
-import { validateAccount, Account } from './data/accounts';
-import { ArrowRight, ArrowLeft, RotateCcw, FileText, Download, AlertCircle, Upload, Clock, Check, ChevronDown, ChevronRight, Filter, FileUp, Settings, Key, ExternalLink, Sun, Moon, X, Paperclip, Trash2, BookOpen, LogIn, Lock, User, Gift, Phone, Shield, Copy, Shuffle, Sparkles, Layers, Zap, History, Save, Eye } from 'lucide-react';
+import { ArrowRight, ArrowLeft, RotateCcw, FileText, Download, AlertCircle, Upload, Clock, Check, ChevronDown, ChevronRight, Filter, FileUp, Settings, Key, ExternalLink, Sun, Moon, X, Paperclip, Trash2, BookOpen, Copy, Shuffle, Sparkles, Layers, Zap, History, Save, Eye, LogOut } from 'lucide-react';
 
 const mdParser = new MarkdownIt({
   html: true,
@@ -31,7 +30,11 @@ const mdParser = new MarkdownIt({
   linkify: true
 });
 
-const App: React.FC = () => {
+interface AppProps {
+  onLogout: () => void;
+}
+
+const App: React.FC<AppProps> = ({ onLogout }) => {
   const [currentStep, setCurrentStep] = useState<AppStep>(AppStep.INPUT);
   const [completedSteps, setCompletedSteps] = useState<number>(0);
 
@@ -67,22 +70,6 @@ const App: React.FC = () => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     localStorage.setItem('examcraft_dark_mode', String(darkMode));
   }, [darkMode]);
-
-  // -- Auth State --
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('examcraft_auth') === 'true';
-  });
-  const [trialUsed, setTrialUsed] = useState<boolean>(() => {
-    return localStorage.getItem('examcraft_trial_used') === 'true';
-  });
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [loggedInUser, setLoggedInUser] = useState<Account | null>(() => {
-    const saved = localStorage.getItem('examcraft_user');
-    return saved ? JSON.parse(saved) : null;
-  });
 
   // -- Provider & Selected Model State --
   const [provider, setProviderState] = useState<AiProvider>(getAiProvider());
@@ -187,47 +174,6 @@ const App: React.FC = () => {
     } catch (e) {
       console.warn('[ExamCraft] Không thể lưu lịch sử vào localStorage:', e);
     }
-  };
-
-  // --- Auth Handlers ---
-  const handleLogin = () => {
-    const account = validateAccount(loginUsername, loginPassword);
-    if (account) {
-      setIsAuthenticated(true);
-      setLoggedInUser(account);
-      setShowLoginModal(false);
-      setLoginError('');
-      setLoginUsername('');
-      setLoginPassword('');
-      localStorage.setItem('examcraft_auth', 'true');
-      localStorage.setItem('examcraft_user', JSON.stringify(account));
-    } else {
-      setLoginError('Sai tên đăng nhập hoặc mật khẩu!');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setLoggedInUser(null);
-    localStorage.removeItem('examcraft_auth');
-    localStorage.removeItem('examcraft_user');
-  };
-
-  /**
-   * Kiểm tra quyền sử dụng: đã đăng nhập HOẶC chưa hết lượt thử
-   * Trả về true nếu được phép, false nếu cần đăng nhập
-   */
-  const checkAuthOrTrial = (): boolean => {
-    if (isAuthenticated) return true;
-    if (!trialUsed) {
-      // Đánh dấu đã dùng lượt thử
-      setTrialUsed(true);
-      localStorage.setItem('examcraft_trial_used', 'true');
-      return true;
-    }
-    // Hết lượt → hiện popup đăng nhập
-    setShowLoginModal(true);
-    return false;
   };
 
   // --- API Key Handlers ---
@@ -626,7 +572,6 @@ const App: React.FC = () => {
   // -- Generation Handlers --
 
   const handleGenerateMatrix = async () => {
-    if (!checkAuthOrTrial()) return;
 
     if (selectedLessonIds.size === 0) {
       alert("Vui lòng chọn ít nhất 1 bài học/chủ đề!");
@@ -661,7 +606,6 @@ const App: React.FC = () => {
   };
 
   const handleGenerateSpecs = async () => {
-    if (!checkAuthOrTrial()) return;
     setGenState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       // Ma trận tải lên: số câu lấy lại trực tiếp từ bảng hiện tại (kể cả khi người dùng đã sửa bảng)
@@ -694,7 +638,6 @@ const App: React.FC = () => {
   };
 
   const handleGenerateExam = async () => {
-    if (!checkAuthOrTrial()) return;
 
     setGenState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
@@ -782,7 +725,6 @@ const App: React.FC = () => {
   };
 
   const handleGenerateExamFromHistory = async (item: ExamHistoryItem) => {
-    if (!checkAuthOrTrial()) return;
 
     setShowHistoryModal(false);
     setAppMode('cv7991');
@@ -2332,121 +2274,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Login Modal */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center p-4" onClick={() => setShowLoginModal(false)}>
-          <div className="modal-elevated max-w-md w-full p-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%)' }} className="p-6 text-white relative overflow-hidden">
-              <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', background: 'rgba(255,255,255,0.08)', borderRadius: '50%' }} />
-              <div style={{ position: 'absolute', bottom: '-30px', left: '-10px', width: '80px', height: '80px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
-              <div className="flex items-center gap-3 mb-3 relative">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
-                  <Lock className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Đăng nhập để tiếp tục</h2>
-                  <p className="text-sm text-teal-100">Bạn đã hết lượt dùng thử miễn phí</p>
-                </div>
-              </div>
-              <button onClick={() => setShowLoginModal(false)} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Login Form */}
-            <div className="p-6 space-y-4">
-              {loginError && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  {loginError}
-                </div>
-              )}
-
-              <div>
-                <label className="text-sm font-semibold text-teal-700 mb-1.5 block flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5" /> Tên đăng nhập
-                </label>
-                <input
-                  type="text"
-                  value={loginUsername}
-                  onChange={(e) => { setLoginUsername(e.target.value); setLoginError(''); }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                  placeholder="Nhập tên đăng nhập..."
-                  className="w-full p-3 input-elevated focus:ring-2 focus:ring-primary outline-none text-sm"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-teal-700 mb-1.5 block flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5" /> Mật khẩu
-                </label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => { setLoginPassword(e.target.value); setLoginError(''); }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                  placeholder="Nhập mật khẩu..."
-                  className="w-full p-3 input-elevated focus:ring-2 focus:ring-primary outline-none text-sm"
-                />
-              </div>
-
-              <button
-                onClick={handleLogin}
-                disabled={!loginUsername.trim() || !loginPassword.trim()}
-                className="w-full py-3 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 text-sm"
-                style={{
-                  background: (!loginUsername.trim() || !loginPassword.trim()) ? '#94a3b8' : 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
-                  cursor: (!loginUsername.trim() || !loginPassword.trim()) ? 'not-allowed' : 'pointer',
-                  boxShadow: (!loginUsername.trim() || !loginPassword.trim()) ? 'none' : '0 4px 14px rgba(13, 148, 136, 0.4)',
-                }}
-              >
-                <LogIn className="w-4 h-4" />
-                Đăng nhập
-              </button>
-            </div>
-
-            {/* Contact Info */}
-            <div style={{ background: 'linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 50%, #f0f9ff 100%)' }} className="p-5 border-t border-teal-100">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-teal-100 shadow-sm">
-                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                    <Phone className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-teal-800">Liên hệ Zalo để mua tài khoản</p>
-                    <a href="https://zalo.me/0348296773" target="_blank" rel="noopener noreferrer" className="text-lg font-bold text-blue-600 hover:underline">0348296773</a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-teal-100 shadow-sm">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                    <Shield className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-teal-800">Phí: <span className="text-emerald-600">199.000đ</span> — Sử dụng không giới hạn thời gian</p>
-                    <p className="text-xs text-slate-500">Ủng hộ tác giả để duy trì và phát triển ứng dụng ❤️</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-amber-100 shadow-sm" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)' }}>
-                  <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                    <Gift className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-amber-800">🎁 TẶNG KÈM APP TẠO ĐỀ THI TOÀN NĂNG!</p>
-                    <a href="https://taodethitoannang.vercel.app" target="_blank" rel="noopener noreferrer" className="text-xs text-amber-700 hover:underline font-medium flex items-center gap-1">
-                      <ExternalLink className="w-3 h-3" /> taodethitoannang.vercel.app
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Settings Modal */}
       {showApiKeyModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -2609,35 +2436,18 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold text-teal-900 leading-tight">TẠO ĐỀ THI THEO CV 7991</h1>
-              <p className="text-xs text-slate-500 leading-tight">Phát triển bởi thầy Trần Hoài Thanh - zalo 0348296773</p>
+              <p className="text-xs text-slate-500 leading-tight">Tác giả: cô Trần Thị Kim Thoa - Trường THPT Hoàng Diệu</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Auth Status Badge */}
-            {isAuthenticated && loggedInUser ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
-                  <Shield className="w-3 h-3" /> {loggedInUser.name}
-                </span>
-                <button onClick={handleLogout} className="text-xs text-slate-400 hover:text-red-500 transition-colors px-1.5 py-1 rounded" title="Đăng xuất">Đăng xuất</button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowLoginModal(true)}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium transition-all cursor-pointer"
-                style={{
-                  background: trialUsed
-                    ? 'linear-gradient(135deg, #fef3c7, #fde68a)'
-                    : 'linear-gradient(135deg, #d1fae5, #a7f3d0)',
-                  color: trialUsed ? '#92400e' : '#065f46',
-                  border: trialUsed ? '1px solid #fcd34d' : '1px solid #6ee7b7',
-                }}
-                title="Nhấn để đăng nhập"
-              >
-                <LogIn className="w-3 h-3" />
-                {trialUsed ? 'Hết lượt thử · Đăng nhập' : '🎁 1 lượt thử miễn phí · Đăng nhập'}
-              </button>
-            )}
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium transition-all cursor-pointer border border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-red-500"
+              title="Đăng xuất"
+            >
+              <LogOut className="w-3 h-3" />
+              Đăng xuất
+            </button>
           </div>
           <div className="flex items-center gap-2" style={{ marginLeft: '8px' }}>
 
@@ -2825,37 +2635,6 @@ const App: React.FC = () => {
                 </div>
 
               </div>
-
-              {/* Login Section on Home Page */}
-              {!isAuthenticated && (
-                <div className="mt-10 max-w-md w-full animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                  <div className="card-elevated p-6 text-center">
-                    <div className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)' }}>
-                      <LogIn className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-teal-800 mb-1">Đăng nhập tài khoản</h3>
-                    <p className="text-sm text-slate-500 mb-4">
-                      {trialUsed
-                        ? 'Bạn đã hết lượt dùng thử. Đăng nhập để sử dụng không giới hạn.'
-                        : 'Đăng nhập ngay hoặc dùng thử 1 lần miễn phí.'}
-                    </p>
-                    <button
-                      onClick={() => setShowLoginModal(true)}
-                      className="w-full py-3 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 text-sm hover:shadow-lg"
-                      style={{
-                        background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
-                        boxShadow: '0 4px 14px rgba(13, 148, 136, 0.3)',
-                      }}
-                    >
-                      <LogIn className="w-4 h-4" />
-                      Đăng nhập
-                    </button>
-                    <p className="text-xs text-slate-400 mt-3">
-                      Liên hệ Zalo <a href="https://zalo.me/0348296773" target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">0348296773</a> để mua tài khoản
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -2924,14 +2703,14 @@ const App: React.FC = () => {
         {/* ===== MODE: TẠO ĐỀ TƯƠNG TỰ ===== */}
         {appMode === 'similar' && (
           <div className="absolute inset-0 overflow-y-auto p-4 sm:p-6">
-            <SimilarExamPage checkAuth={checkAuthOrTrial} />
+            <SimilarExamPage />
           </div>
         )}
 
         {/* ===== MODE: SINH 3 ĐỀ BIẾN THỂ ===== */}
         {appMode === 'variants' && (
           <div className="absolute inset-0 overflow-y-auto p-4 sm:p-6">
-            <VariantsExamPage checkAuth={checkAuthOrTrial} />
+            <VariantsExamPage />
           </div>
         )}
       </main>
