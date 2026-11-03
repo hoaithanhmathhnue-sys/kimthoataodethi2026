@@ -1,51 +1,232 @@
 
+import { QuestionConfig } from './types';
+
 export const SYSTEM_INSTRUCTION = `
 # VAI TRÒ
-Bạn là chuyên gia thiết kế đề thi theo chuẩn Bộ Giáo dục & Đào tạo Việt Nam. Nhiệm vụ của bạn là tạo MA TRẬN, BẢNG ĐẶC TẢ, ĐỀ THI và ĐÁP ÁN chính xác tuyệt đối theo yêu cầu.
+Bạn là chuyên gia thiết kế đề thi cấp THPT theo chuẩn Bộ Giáo dục & Đào tạo Việt Nam (Chương trình GDPT 2018, CV 7991).
+Nhiệm vụ của bạn là tạo MA TRẬN, BẢNG ĐẶC TẢ, ĐỀ THI và ĐÁP ÁN chính xác tuyệt đối.
 
 # BƯỚC 0: VALIDATION INPUT (QUAN TRỌNG NHẤT)
 Trước khi sinh bất kỳ nội dung nào, hãy kiểm tra:
-1. **Số câu Tự luận (TL):** 
+1. **Khối lớp:**
+   - Nếu **Lớp 12**: mặc định KHÔNG có tự luận (thang điểm **3-4-3-0**) — TRỪ KHI cấu hình số câu của người dùng có Tự luận > 0 (khi đó làm theo cấu hình người dùng).
+   - Nếu **Lớp 10 hoặc 11**: Kiểm tra số câu Tự luận.
+2. **Số câu Tự luận (TL):** 
    - Nếu TL > 0: Áp dụng thang điểm **3-2-2-3** (Dạng I: 3đ, II: 2đ, III: 2đ, TL: 3đ).
    - Nếu TL = 0: Áp dụng thang điểm **3-4-3-0** (Dạng I: 3đ, II: 4đ, III: 3đ, TL: 0đ).
-2. **Số lượng câu hỏi từng phần:**
+3. **Số lượng câu hỏi từng phần:**
    - Nếu số câu = 0: TUYỆT ĐỐI KHÔNG TẠO phần đó trong Ma trận, Đặc tả, Đề thi, Đáp án.
+
+# CẤU TRÚC CỘT MA TRẬN CHUẨN (RẤT QUAN TRỌNG)
+**Mỗi dạng câu hỏi (TNKQ Nhiều lựa chọn, Đúng-Sai, Trả lời ngắn, Tự luận) CHỈ CÓ 3 CỘT MỨC ĐỘ: Biết | Hiểu | VD (Vận dụng).**
+- KHÔNG tạo cột "VDC" (Vận dụng cao) riêng biệt trong bảng ma trận/đặc tả.
+- Cột "VD" bao gồm cả Vận dụng và Vận dụng cao.
+- Cột Tổng cuối bảng cũng CHỈ có 3 cột: Biết | Hiểu | VD.
 
 # QUY TẮC XUẤT BẢN
 
 ## 1. MA TRẬN ĐỀ THI
 - Format: HTML Table chuẩn (rowspan/colspan đầy đủ).
 - Cột Điểm: Tính toán dựa trên thang điểm đã xác định ở Bước 0.
-- Mã câu hỏi: C1(1), C2(2)... (Kèm mức độ năng lực).
+- Mã câu hỏi: Dùng format "I.số" cho Dạng I, "II.số" cho Đúng-Sai, "III.số" cho Trả lời ngắn, "IV.số" cho Tự luận.
+- Ví dụ mã câu: I.1, I.2, I.11, II.1a, II.1b, II.1c, II.1d, III.1, IV.1a, IV.1b
 
 ## 2. BẢNG ĐẶC TẢ
 - Format: HTML Table chuẩn.
-- Cột "Mức độ kiểm tra": Copy chính xác từ Yêu cầu cần đạt.
-- Thêm ví dụ minh họa (in nghiêng) cho từng mức độ.
+- Cột "Yêu cầu cần đạt": Ghi chi tiết theo 3 mức độ: NB (Nhận biết), TH (Thông hiểu), VD (Vận dụng).
+- Cột câu hỏi: Mapping mã câu từ ma trận.
 
 ## 3. NGUYÊN TẮC VÀNG VỀ NỘI DUNG
 - **Không bịa đặt:** Không tạo các phần mà người dùng không yêu cầu (số câu = 0).
 - **Điểm số:** Luôn là bội số của 0.25. Làm tròn hợp lý.
-- **LaTeX:** Dùng cho công thức toán học ($...$).
+- **Công thức:** Mọi công thức/ký hiệu toán–lý–hoá PHẢI viết bằng LaTeX: $...$ cho công thức trong dòng, $$...$$ cho công thức đứng riêng dòng. Không dùng ký tự Unicode hay HTML sub/sup thay cho LaTeX. Luôn để đúng một dấu cách hai đầu công thức trong dòng và xuống dòng quanh công thức hiển thị để không dính vào chữ.
 
 ## 4. QUY TẮC ĐIỂM SỐ CHI TIẾT
 **Kịch bản A: Có Tự luận (3-2-2-3)**
-- Dạng I: 3.0 điểm
-- Dạng II: 2.0 điểm
-- Dạng III: 2.0 điểm
-- Tự luận: 3.0 điểm
+- Dạng I (TNKQ nhiều lựa chọn): 3.0 điểm (mỗi câu 0.25đ)
+- Dạng II (Đúng-Sai): 2.0 điểm (mỗi câu 1.0đ, 4 ý a,b,c,d)
+- Dạng III (Trả lời ngắn): 2.0 điểm (mỗi câu 0.5đ)
+- Tự luận (IV): 3.0 điểm
+- **TỈ LỆ %:** Dạng I: 30% | Dạng II: 20% | Dạng III: 20% | Tự luận: 30%
+- **TỈ LỆ NGANG:** Biết: 40% | Hiểu: 30% | VD: 30%
 
-**Kịch bản B: Không Tự luận (3-4-3-0)**
+**Kịch bản B: Không Tự luận (3-4-3-0) — mặc định cho Lớp 12**
 - Dạng I: 3.0 điểm
 - Dạng II: 4.0 điểm (QUAN TRỌNG: Tăng lên 4.0)
 - Dạng III: 3.0 điểm (QUAN TRỌNG: Tăng lên 3.0)
 - Tự luận: 0.0 điểm
+
+## 5. CHÚ THÍCH NĂNG LỰC
+- TD: Năng lực nhận thức / tư duy (dùng cho cột Biết và Hiểu)
+- GQVĐ: Năng lực giải quyết vấn đề / vận dụng (dùng cho cột VD)
 `;
 
-export const MODEL_NAME = 'gemini-3-pro-preview';
+/**
+ * SYSTEM INSTRUCTION khi người dùng TẢI LÊN Ma trận / Đặc tả.
+ * Không chứa các quy tắc cứng (3 mức, cấm VDC, thang 3-4-3 / 3-2-2-3, lớp 12 cấm tự luận, bắt buộc mã I./II.)
+ * vì các quy tắc đó mâu thuẫn trực tiếp với yêu cầu "giữ nguyên 100% ma trận của người dùng".
+ */
+export const SYSTEM_INSTRUCTION_UPLOADED = `
+# VAI TRÒ
+Bạn là chuyên gia ra đề kiểm tra theo Chương trình GDPT 2018 (định dạng đề theo CV 7991/BGDĐT-GDTrH).
+Người dùng đã TẢI LÊN Ma trận / Bản đặc tả của chính họ.
 
-export const FALLBACK_MODELS = [
-   'gemini-3-flash-preview',
-   'gemini-3-pro-preview',
-   'gemini-2.5-flash',
+# NGUYÊN TẮC TỐI THƯỢNG
+1. Ma trận / Đặc tả người dùng tải lên là CHUẨN CAO NHẤT. Khối "HỢP ĐỒNG SỐ LIỆU" trong yêu cầu được máy đọc trực tiếp từ file đó.
+2. Giữ ĐÚNG số phần, số câu, số ý, mức độ (kể cả "Vận dụng cao" nếu file có — KHÔNG gộp vào Vận dụng), đơn vị kiến thức và thang điểm như file.
+3. KHÔNG áp bất kỳ "chuẩn mặc định" nào khác (thang 3-4-3, 3-2-2-3, lớp 12 không tự luận…) khi file ghi khác.
+4. Phần nào file KHÔNG có thì TUYỆT ĐỐI KHÔNG tạo. Không bịa thêm câu, thêm ý, thêm phần.
+5. Nội dung câu hỏi phải đúng MÔN HỌC và KHỐI LỚP đã nêu, đúng phạm vi đơn vị kiến thức trong file.
+
+# CÔNG THỨC
+Mọi công thức/ký hiệu toán – lý – hoá viết bằng LaTeX: $...$ trong dòng, $$...$$ đứng riêng dòng; không dùng ký tự Unicode thay công thức (x², √, ≤ …). Một dấu cách trước và sau công thức trong dòng.
+`;
+
+/** Chọn system instruction phù hợp: tôn trọng ma trận tải lên hay dùng chuẩn mặc định của app. */
+export const getSystemInstruction = (respectUserMatrix: boolean): string =>
+  respectUserMatrix ? SYSTEM_INSTRUCTION_UPLOADED : SYSTEM_INSTRUCTION;
+
+// --- Footnotes by subject (extensible) ---
+export const SUBJECT_FOOTNOTES: Record<string, string> = {
+  'Hóa học': `
+(1): Năng lực nhận thức hóa học
+(2): Năng lực tìm hiểu thế giới tự nhiên dưới góc độ hóa học
+(3): Năng lực vận dụng kiến thức, kĩ năng hóa học đã học`,
+  'Toán': `
+(1): Năng lực tư duy và lập luận toán học
+(2): Năng lực mô hình hóa toán học
+(3): Năng lực giải quyết vấn đề toán học`,
+  'Vật lí': `
+(1): Năng lực nhận thức vật lí
+(2): Năng lực tìm hiểu thế giới tự nhiên dưới góc độ vật lí
+(3): Năng lực vận dụng kiến thức, kĩ năng vật lí đã học`,
+  'Sinh học': `
+(1): Năng lực nhận thức sinh học
+(2): Năng lực tìm hiểu thế giới sống
+(3): Năng lực vận dụng kiến thức, kĩ năng sinh học đã học`,
+  'Lịch sử': `
+(1): Năng lực tìm hiểu lịch sử
+(2): Năng lực nhận thức và tư duy lịch sử
+(3): Năng lực vận dụng kiến thức, kĩ năng đã học`,
+  'Địa lí': `
+(1): Năng lực nhận thức khoa học địa lí
+(2): Năng lực tìm hiểu địa lí
+(3): Năng lực vận dụng kiến thức, kĩ năng đã học`,
+  'default': `
+(1): Năng lực nhận thức
+(2): Năng lực tìm hiểu
+(3): Năng lực vận dụng kiến thức, kĩ năng đã học`,
+};
+
+// Tên môn trong ô chọn ("Toán học", "Hoá học"…) → khoá trong SUBJECT_FOOTNOTES
+const SUBJECT_FOOTNOTE_ALIASES: Record<string, string> = {
+  'toán học': 'Toán', 'toán': 'Toán',
+  'hóa học': 'Hóa học', 'hoá học': 'Hóa học', 'hóa': 'Hóa học', 'hoá': 'Hóa học',
+  'vật lí': 'Vật lí', 'vật lý': 'Vật lí',
+  'sinh học': 'Sinh học',
+  'lịch sử': 'Lịch sử',
+  'địa lí': 'Địa lí', 'địa lý': 'Địa lí',
+};
+
+export const getSubjectFootnotes = (subject: string): string => {
+  if (!subject) return SUBJECT_FOOTNOTES['default'];
+  if (SUBJECT_FOOTNOTES[subject]) return SUBJECT_FOOTNOTES[subject];
+  const key = SUBJECT_FOOTNOTE_ALIASES[subject.trim().toLowerCase().normalize('NFC')];
+  return (key && SUBJECT_FOOTNOTES[key]) || SUBJECT_FOOTNOTES['default'];
+};
+
+// --- Default question configs per grade ---
+// Lớp 10 & 11 (Giữa kỳ): 12 TN + 2 Đ/S + 4 TL ngắn + 3 TL = tổng ~30 lệnh hỏi
+// Lớp 12 (Cuối kỳ): 18 TN + 4 Đ/S + 6 TL ngắn + 0 TL
+export const DEFAULT_QUESTION_CONFIG: Record<string, QuestionConfig> = {
+  '10': {
+    type1: { biet: 8, hieu: 2, van_dung: 2, van_dung_cao: 0 },
+    type2: { biet: 4, hieu: 2, van_dung: 2, van_dung_cao: 0 },
+    type2QuestionCount: 2,
+    dungSaiLevelConfigs: [
+      { yA: 'nhan_biet', yB: 'nhan_biet', yC: 'thong_hieu', yD: 'van_dung' },
+      { yA: 'nhan_biet', yB: 'nhan_biet', yC: 'thong_hieu', yD: 'van_dung' },
+    ],
+    type3: { biet: 1, hieu: 2, van_dung: 1, van_dung_cao: 0 },
+    essay: { biet: 1, hieu: 2, van_dung: 3, van_dung_cao: 0 },
+  },
+  '11': {
+    type1: { biet: 8, hieu: 2, van_dung: 2, van_dung_cao: 0 },
+    type2: { biet: 4, hieu: 2, van_dung: 2, van_dung_cao: 0 },
+    type2QuestionCount: 2,
+    dungSaiLevelConfigs: [
+      { yA: 'nhan_biet', yB: 'nhan_biet', yC: 'thong_hieu', yD: 'van_dung' },
+      { yA: 'nhan_biet', yB: 'nhan_biet', yC: 'thong_hieu', yD: 'van_dung' },
+    ],
+    type3: { biet: 1, hieu: 2, van_dung: 1, van_dung_cao: 0 },
+    essay: { biet: 1, hieu: 2, van_dung: 3, van_dung_cao: 0 },
+  },
+  '12': {
+    type1: { biet: 10, hieu: 4, van_dung: 4, van_dung_cao: 0 },
+    type2: { biet: 4, hieu: 6, van_dung: 6, van_dung_cao: 0 },
+    type2QuestionCount: 4,
+    dungSaiLevelConfigs: Array.from({ length: 4 }, () => ({ yA: 'nhan_biet', yB: 'nhan_biet', yC: 'thong_hieu', yD: 'van_dung' })),
+    type3: { biet: 0, hieu: 4, van_dung: 2, van_dung_cao: 0 },
+    essay: { biet: 0, hieu: 0, van_dung: 0, van_dung_cao: 0 }, // Khối 12 KHÔNG có tự luận
+  },
+};
+
+// Grade 12 does NOT allow essay questions
+export const GRADE_NO_ESSAY = ['12'];
+
+export type AiProvider = 'gemini' | 'agent-platform';
+
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
+export const DEFAULT_AGENT_PLATFORM_MODEL = 'gemini-2.5-flash';
+export const MODEL_NAME = DEFAULT_GEMINI_MODEL;
+
+export const GEMINI_MODEL_STORAGE_KEY = 'gemini_model_id_v38';
+export const LEGACY_GEMINI_MODEL_STORAGE_KEYS = [
+  'GEMINI_MODEL_ID',
+  'examcraft_selected_model',
+  'gemini_model_id',
+] as const;
+
+export const GEMINI_MODELS = [
+  { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', desc: 'Mới nhất (GA 09/2026) — thông minh, tốc độ cao & chịu tải tốt nhất', badge: 'Mặc định' },
+  { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', desc: 'Bản ổn định tốc độ cao, thực thi đa bước tin cậy (GA 08/2026)', badge: 'Stable' },
+  { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash-Lite', desc: 'Tốc độ cực nhanh, chi phí thấp, dung lượng chịu tải rất lớn', badge: 'Lite' },
+  { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', desc: 'Bản ổn định thế hệ 3.6 cân bằng đa phương thức', badge: 'Stable' },
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', desc: 'Bản ổn định thế hệ 3.5', badge: 'Stable' },
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Preview)', desc: 'Suy luận chuyên sâu phức tạp (yêu cầu Paid API Key)', badge: 'Pro' },
+  { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash-Lite', desc: 'Nhẹ, tương thích ngược', badge: 'Lite' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Ổn định thế hệ 2.5, dự phòng cuối chuỗi', badge: 'Stable' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Suy luận sâu thế hệ 2.5', badge: 'Pro' },
 ];
+
+export const AGENT_PLATFORM_MODELS = [
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Mặc định cho Agent Platform API, tốc độ nhanh, ổn định', badge: 'Mặc định' },
+  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', desc: 'Tốc độ cao, chi phí thấp trên Agent Platform', badge: 'Lite' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Suy luận mạnh trên Agent Platform, xử lý tài liệu dài', badge: 'Pro' },
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Preview)', desc: 'Suy luận phức tạp thế hệ 3.1 trên Agent Platform', badge: 'Pro' },
+];
+
+export const FALLBACK_GEMINI_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash',
+] as const;
+
+export const AGENT_PLATFORM_FALLBACK_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
+] as const;
+
+export const PROVIDER_FALLBACK_MODELS: Record<AiProvider, string[]> = {
+  'gemini': [...FALLBACK_GEMINI_MODELS],
+  'agent-platform': [...AGENT_PLATFORM_FALLBACK_MODELS],
+};
+
+export const FALLBACK_MODELS = PROVIDER_FALLBACK_MODELS['gemini'];
+
+export const AVAILABLE_MODELS = GEMINI_MODELS;
